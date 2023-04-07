@@ -102,6 +102,10 @@ export const StartCountDownButton = styled.button`
   background: ${props => props.theme['green-500']};
   color: ${props => props.theme['gray-100']};
 
+  &:focus {
+    box-shadow: none;
+  }
+
   &:disabled {
     opacity: 0.7;
     cursor: not-allowed;
