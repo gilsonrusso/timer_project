@@ -6,28 +6,30 @@ import {
   StartCountDownButton,
   TaskInput,
   MinutesAmountInput,
+  StopCountDownButton,
 } from './styles';
 
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 
-import { Play } from 'phosphor-react';
+import { HandPalm, Play } from 'phosphor-react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as zod from 'zod';
 import { differenceInSeconds } from 'date-fns';
 
 const newCycleFormValidationSchema = zod.object({
   task: zod.string().min(1, 'Input a task'),
-  minuteAmount: zod.number().min(5).max(60),
+  minuteAmount: zod.number().min(1).max(60),
 });
 
 type INewCycleFormData = zod.infer<typeof newCycleFormValidationSchema>;
-
 interface Cycle {
   id: string;
   task: string;
   minuteAmount: number;
   startDate: Date;
+  interruptedDate?: Date;
+  finishedDate?: Date;
 }
 
 export function Home() {
@@ -45,18 +47,38 @@ export function Home() {
 
   const activeCycle = cycles.find((cycle) => cycle.id === activeCycleId);
 
+  const totalSeconds = activeCycle ? activeCycle.minuteAmount * 60 : 0;
+
   useEffect(() => {
     let interval: number;
     if (activeCycle) {
       interval = setInterval(() => {
-        setAmountSecondsPassed(differenceInSeconds(new Date(), activeCycle.startDate));
+        const secondsDifference = differenceInSeconds(new Date(), activeCycle.startDate);
+
+        if (secondsDifference >= totalSeconds) {
+          setCycles((state) =>
+            state.map((cycle) => {
+              if (cycle.id === activeCycleId) {
+                return { ...cycle, finishedDate: new Date() };
+              } else {
+                return cycle;
+              }
+            })
+          );
+          
+          setAmountSecondsPassed(totalSeconds);
+          clearInterval(interval);
+          setActiveCycleId(null);
+        } else {
+          setAmountSecondsPassed(secondsDifference);
+        }
       }, 1000);
     }
 
     return () => {
       clearInterval(interval);
     };
-  }, [activeCycle]);
+  }, [activeCycle, totalSeconds, activeCycleId]);
 
   function handlerCreateNewCycle(data: INewCycleFormData): void {
     const id = String(new Date().getTime());
@@ -75,7 +97,19 @@ export function Home() {
     reset();
   }
 
-  const totalSeconds = activeCycle ? activeCycle.minuteAmount * 60 : 0;
+  function handlerInterruptCycle(): void {
+    setCycles(state =>
+      state.map((cycle) => {
+        if (cycle.id === activeCycleId) {
+          return { ...cycle, interruptedDate: new Date() };
+        } else {
+          return cycle;
+        }
+      })
+    );
+    setActiveCycleId(null);
+  }
+
   const currentSeconds = activeCycle ? totalSeconds - amountSecondsPassed : 0;
 
   const minutesAmount = Math.floor(currentSeconds / 60);
@@ -103,6 +137,7 @@ export function Home() {
             type="text"
             list="task-suggestions"
             placeholder="Give a name for the project"
+            disabled={!!activeCycle}
             {...register('task')}
           />
 
@@ -118,9 +153,10 @@ export function Home() {
             type="number"
             id="minutesAmount"
             placeholder="00"
-            step={5}
-            min={5}
+            step={1}
+            min={1}
             max={60}
+            disabled={!!activeCycle}
             {...register('minuteAmount', { valueAsNumber: true })}
           />
           <span>seconds.</span>
@@ -134,10 +170,15 @@ export function Home() {
           <span>{seconds[1]}</span>
         </CountDownContainer>
 
-        <StartCountDownButton disabled={isSubmitDisabled} type="submit">
-          {' '}
-          <Play size={24} /> Start
-        </StartCountDownButton>
+        {activeCycle ? (
+          <StopCountDownButton onClick={handlerInterruptCycle} type="button">
+            <HandPalm size={24} /> Stop
+          </StopCountDownButton>
+        ) : (
+          <StartCountDownButton disabled={isSubmitDisabled} type="submit">
+            <Play size={24} /> Start
+          </StartCountDownButton>
+        )}
       </form>
     </HomeContainer>
   );
