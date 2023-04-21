@@ -15,6 +15,7 @@ interface ICreateCycleData {
 }
 
 export interface ICyclesContextType {
+  cycles: Cycle[];
   activeCycle: Cycle | undefined;
   activeCycleId: string | null;
   amountSecondsPassed: number;
@@ -66,17 +67,17 @@ export function CyclesContextProvider( { children }: CyclesContextProviderProps 
     setActiveCycleId(id);
 
     setAmountSecondsPassed(0);
-
-    // reset();
   }
 
   function interruptCurrentCycle(): void {
+    markCurrentCycleAsFinished();
     setActiveCycleId(null);
   }
 
   return (
     <CyclesContext.Provider
       value={{
+        cycles,
         activeCycle,
         activeCycleId,
         amountSecondsPassed,
