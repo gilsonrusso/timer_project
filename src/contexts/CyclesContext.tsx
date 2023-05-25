@@ -3,7 +3,7 @@ import { addNewCycleAction, interruptCurrentCycleAction, markCurrentCycleAsFinis
 import { Cycle, cyclesReducers } from "../reducers/cycles/reducer";
 
 interface ICreateCycleData {
-  task: string | undefined;
+  task: string | null;
   minuteAmount: number
 }
 
@@ -54,7 +54,7 @@ export function CyclesContextProvider({ children }: CyclesContextProviderProps) 
     const id = String(new Date().getTime());
     const newCycle: Cycle = {
       id,
-      task: data.task,
+      task: data.task || '',
       minuteAmount: data.minuteAmount,
       startDate: new Date(),
     };
