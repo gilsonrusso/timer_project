@@ -10,7 +10,7 @@ export interface Cycle {
 }
 
 interface ICreateCycleData {
-  task: string;
+  task: string | undefined;
   minuteAmount: number
 }
 
